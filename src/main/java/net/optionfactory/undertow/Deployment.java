@@ -13,7 +13,10 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
+
+import io.undertow.websockets.jsr.WebSocketDeploymentInfo;
 import org.springframework.core.env.EnumerablePropertySource;
 import org.springframework.web.SpringServletContainerInitializer;
 import org.springframework.web.WebApplicationInitializer;
@@ -66,6 +69,18 @@ public interface Deployment {
      */
     default Deployment useForwardHeaders() {
         return () -> configuration().addInitialHandlerChainWrapper(new ProxyPeerAddressHandler.Builder().build(Collections.emptyMap()));
+    }
+
+    /**
+     * Enable WebSocket support. If no custom configuration is needed, the
+     * parameter should just be an identity function.
+     *
+     * @param webSocketConfiguration a function that configures the default
+     * WebSocket deployment and returns it
+     * @return a modified copy of the deployment configuration
+     */
+    default Deployment enableWebSockets(UnaryOperator<WebSocketDeploymentInfo> webSocketConfiguration) {
+        return () -> configuration().addServletContextAttribute(WebSocketDeploymentInfo.ATTRIBUTE_NAME, webSocketConfiguration.apply(new WebSocketDeploymentInfo()));
     }
 
     /**
